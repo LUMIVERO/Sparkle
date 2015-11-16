@@ -134,6 +134,15 @@ SU_EXPORT extern NSString *const SUUpdaterAppcastNotificationKey;
 @protocol SUUpdaterDelegate <NSObject>
 @optional
 
+
+/*!
+ Returns a custom driver.
+
+
+ \param updater The SUUpdater instance.
+ */
+- (SUUpdateDriver*)driverForUpdater:(SUUpdater *)updater;
+
 /*!
     Returns whether to allow Sparkle to pop up.
 
