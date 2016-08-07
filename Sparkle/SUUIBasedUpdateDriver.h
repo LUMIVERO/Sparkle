@@ -17,7 +17,7 @@
 
 SU_EXPORT @interface SUUIBasedUpdateDriver : SUBasicUpdateDriver <SUUnarchiverDelegate>
 
-- (void)showModalAlert:(NSAlert *)alert;
+- (void)showAlert:(NSAlert *)alert;
 - (IBAction)cancelDownload:(id)sender;
 - (void)installAndRestart:(id)sender;
 
