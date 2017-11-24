@@ -16,6 +16,15 @@
 #import <WebKit/WebKit.h>
 
 #import "SUConstants.h"
+#import "SULog.h"
+#import "SULocalizations.h"
+#import "SUAppcastItem.h"
+#import "SUApplicationInfo.h"
+#import "SUSystemUpdateInfo.h"
+#import "SUTouchBarForwardDeclarations.h"
+#import "SUTouchBarButtonGroup.h"
+
+static NSString *const SUUpdateAlertTouchBarIndentifier = @"" SPARKLE_BUNDLE_IDENTIFIER ".SUUpdateAlert";
 
 // WebKit protocols are not explicitly declared until 10.11 SDK, so
 // declare dummy protocols to keep the build working on earlier SDKs.
@@ -26,7 +35,7 @@
 @end
 #endif
 
-@interface SUUpdateAlert () <WebFrameLoadDelegate, WebPolicyDelegate>
+@interface SUUpdateAlert () <WebFrameLoadDelegate, WebPolicyDelegate, NSTouchBarDelegate>
 
 @property (strong) SUAppcastItem *updateItem;
 @property (strong) SUHost *host;
@@ -84,6 +93,9 @@
 
 - (NSString *)description { return [NSString stringWithFormat:@"%@ <%@>", [self class], [self.host bundlePath]]; }
 
+- (void)disableKeyboardShortcutForInstallButton {
+    self.installButton.keyEquivalent = @"";
+}
 
 - (void)endWithSelection:(SUUpdateAlertChoice)choice
 {
@@ -121,11 +133,13 @@
     self.releaseNotesView.preferencesIdentifier = SUBundleIdentifier;
     WebPreferences *prefs = [self.releaseNotesView preferences];
     prefs.plugInsEnabled = NO;
+    prefs.javaEnabled = NO;
+    prefs.javaScriptEnabled = [self.host boolForInfoDictionaryKey:SUEnableJavaScriptKey];
     self.releaseNotesView.frameLoadDelegate = self;
     self.releaseNotesView.policyDelegate = self;
     
     // Set the default font
-    // "-apple-system-font" is a reference to the system UI font on OS X. "-apple-system" is the new recommended token, but for backward compatibility we can't use it.
+    // "-apple-system-font" is a reference to the system UI font. "-apple-system" is the new recommended token, but for backward compatibility we can't use it.
     prefs.standardFontFamily = @"-apple-system-font";
     prefs.defaultFontSize = (int)[NSFont systemFontSize];
 
@@ -140,14 +154,7 @@
     // If there's a release notes URL, load it; otherwise, just stick the contents of the description into the web view.
 	if ([self.updateItem releaseNotesURL])
 	{
-		if ([[self.updateItem releaseNotesURL] isFileURL])
-		{
-            [[self.releaseNotesView mainFrame] loadHTMLString:@"Release notes with file:// URLs are not supported for security reasons&mdash;Javascript would be able to read files on your file system." baseURL:nil];
-		}
-		else
-		{
-            [[self.releaseNotesView mainFrame] loadRequest:[NSURLRequest requestWithURL:[self.updateItem releaseNotesURL] cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:30]];
-        }
+        [[self.releaseNotesView mainFrame] loadRequest:[NSURLRequest requestWithURL:[self.updateItem releaseNotesURL] cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:30]];
 	}
 	else
 	{
@@ -171,11 +178,8 @@
 
 - (BOOL)allowsAutomaticUpdates
 {
-    BOOL allowAutoUpdates = YES; // Defaults to YES.
-    if ([self.host objectForInfoDictionaryKey:SUAllowsAutomaticUpdatesKey])
-        allowAutoUpdates = [self.host boolForInfoDictionaryKey:SUAllowsAutomaticUpdatesKey];
-
-    return allowAutoUpdates;
+    return [SUSystemUpdateInfo systemAllowsAutomaticUpdatesForHost:self.host]
+            && !self.updateItem.isInformationOnlyUpdate;
 }
 
 - (void)windowDidLoad
@@ -184,7 +188,7 @@
 
     [self.window setFrameAutosaveName: showReleaseNotes ? @"SUUpdateAlert" : @"SUUpdateAlertSmall" ];
 
-    if ([self.host isBackgroundApplication]) {
+    if ([SUApplicationInfo isBackgroundApplication:[NSApplication sharedApplication]]) {
         [self.window setLevel:NSFloatingWindowLevel]; // This means the window will float over all other apps, if our app is switched out ?!
     }
 
@@ -202,6 +206,20 @@
         
         [self.releaseNotesContainerView removeFromSuperview];
     }
+    
+    // When we show release notes, it looks ugly if the install buttons are not closer to the release notes view
+    // However when we don't show release notes, it looks ugly if the install buttons are too close to the description field. Shrugs.
+    if (showReleaseNotes && ![self allowsAutomaticUpdates]) {
+        NSLayoutConstraint *skipButtonToReleaseNotesContainerConstraint = [NSLayoutConstraint constraintWithItem:self.skipButton attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.releaseNotesContainerView attribute:NSLayoutAttributeBottom multiplier:1.0 constant:12.0];
+        
+        [self.window.contentView addConstraint:skipButtonToReleaseNotesContainerConstraint];
+        
+        [self.automaticallyInstallUpdatesButton removeFromSuperview];
+    }
+
+    if ([self.updateItem isCriticalUpdate]) {
+        self.skipButton.enabled = NO;
+    }
 
     [self.window center];
 }
@@ -214,7 +232,7 @@
 
 - (NSImage *)applicationIcon
 {
-    return [self.host icon];
+    return [SUApplicationInfo bestIconForHost:self.host];
 }
 
 - (NSString *)titleText
@@ -256,8 +274,18 @@
 
 - (void)webView:(WebView *)__unused sender decidePolicyForNavigationAction:(NSDictionary *)__unused actionInformation request:(NSURLRequest *)request frame:(WebFrame *)__unused frame decisionListener:(id<WebPolicyDecisionListener>)listener
 {
+    NSURL *requestURL = request.URL;
+    NSString *scheme = requestURL.scheme;
+    BOOL whitelistedSafe = [scheme isEqualToString:@"http"] || [scheme isEqualToString:@"https"] || [requestURL.absoluteString isEqualToString:@"about:blank"];
+
+    // Do not allow redirects to dangerous protocols such as file://
+    if (!whitelistedSafe) {
+        SULog(SULogLevelDefault, @"Blocked display of %@ URL which may be dangerous", scheme);
+        [listener ignore];
+        return;
+    }
+
     if (self.webViewFinishedLoading) {
-        NSURL *requestURL = request.URL;
         if (requestURL) {
             [[NSWorkspace sharedWorkspace] openURL:requestURL];
         }
@@ -297,6 +325,25 @@
     }
 
     return webViewMenuItems;
+}
+
+- (NSTouchBar *)makeTouchBar
+{
+    NSTouchBar *touchBar = [[NSClassFromString(@"NSTouchBar") alloc] init];
+    touchBar.defaultItemIdentifiers = @[SUUpdateAlertTouchBarIndentifier,];
+    touchBar.principalItemIdentifier = SUUpdateAlertTouchBarIndentifier;
+    touchBar.delegate = self;
+    return touchBar;
+}
+
+- (NSTouchBarItem *)touchBar:(NSTouchBar * __unused)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier API_AVAILABLE(macos(10.12.2))
+{
+    if ([identifier isEqualToString:SUUpdateAlertTouchBarIndentifier]) {
+        NSCustomTouchBarItem* item = [(NSCustomTouchBarItem *)[NSClassFromString(@"NSCustomTouchBarItem") alloc] initWithIdentifier:identifier];
+        item.viewController = [[SUTouchBarButtonGroup alloc] initByReferencingButtons:@[self.installButton, self.laterButton, self.skipButton]];
+        return item;
+    }
+    return nil;
 }
 
 @end

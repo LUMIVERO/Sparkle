@@ -8,18 +8,20 @@
 
 #import "SUTestApplicationDelegate.h"
 #import "SUUpdateSettingsWindowController.h"
+#import "SUFileManager.h"
+#import "SUTestWebServer.h"
 
 @interface SUTestApplicationDelegate ()
 
 @property (nonatomic) SUUpdateSettingsWindowController *updateSettingsWindowController;
-@property (nonatomic) NSTask *serverTask;
+@property (nonatomic) SUTestWebServer *webServer;
 
 @end
 
 @implementation SUTestApplicationDelegate
 
 @synthesize updateSettingsWindowController = _updateSettingsWindowController;
-@synthesize serverTask = _serverTask;
+@synthesize webServer = _webServer;
 
 static NSString * const UPDATED_VERSION = @"2.0";
 
@@ -37,11 +39,11 @@ static NSString * const UPDATED_VERSION = @"2.0";
         [[NSApplication sharedApplication] terminate:nil];
     }
     
-    NSFileManager *fileManager = [NSFileManager defaultManager];
+    SUFileManager *fileManager = [SUFileManager defaultManager];
     
     // Locate user's cache directory
     NSError *cacheError = nil;
-    NSURL *cacheDirectoryURL = [fileManager URLForDirectory:NSCachesDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:YES error:&cacheError];
+    NSURL *cacheDirectoryURL = [[NSFileManager defaultManager] URLForDirectory:NSCachesDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:YES error:&cacheError];
     
     if (cacheDirectoryURL == nil) {
         NSLog(@"Failed to locate cache directory with error: %@", cacheError);
@@ -52,8 +54,8 @@ static NSString * const UPDATED_VERSION = @"2.0";
     assert(bundleIdentifier != nil);
     
     // Create a directory that'll be used for our web server listing
-    NSURL *serverDirectoryURL = [cacheDirectoryURL URLByAppendingPathComponent:bundleIdentifier];
-    if ([fileManager fileExistsAtPath:serverDirectoryURL.path]) {
+    NSURL *serverDirectoryURL = [[cacheDirectoryURL URLByAppendingPathComponent:bundleIdentifier] URLByAppendingPathComponent:@"ServerData"];
+    if ([serverDirectoryURL checkResourceIsReachableAndReturnError:nil]) {
         NSError *removeServerDirectoryError = nil;
         
         if (![fileManager removeItemAtURL:serverDirectoryURL error:&removeServerDirectoryError]) {
@@ -62,7 +64,7 @@ static NSString * const UPDATED_VERSION = @"2.0";
     }
     
     NSError *createDirectoryError = nil;
-    if (![fileManager createDirectoryAtURL:serverDirectoryURL withIntermediateDirectories:YES attributes:nil error:&createDirectoryError]) {
+    if (![[NSFileManager defaultManager] createDirectoryAtURL:serverDirectoryURL withIntermediateDirectories:YES attributes:nil error:&createDirectoryError]) {
         NSLog(@"Failed creating directory at %@ with error %@", serverDirectoryURL.path, createDirectoryError);
         assert(NO);
     }
@@ -71,7 +73,10 @@ static NSString * const UPDATED_VERSION = @"2.0";
     assert(bundleURL != nil);
     
     // Copy main bundle into server directory
-    NSURL *destinationBundleURL = [serverDirectoryURL URLByAppendingPathComponent:bundleURL.lastPathComponent];
+    NSString *bundleURLLastComponent = bundleURL.lastPathComponent;
+    assert(bundleURLLastComponent != nil);
+    
+    NSURL *destinationBundleURL = [serverDirectoryURL URLByAppendingPathComponent:bundleURLLastComponent];
     NSError *copyBundleError = nil;
     if (![fileManager copyItemAtURL:bundleURL toURL:destinationBundleURL error:&copyBundleError]) {
         NSLog(@"Failed to copy main bundle into server directory with error %@", copyBundleError);
@@ -81,31 +86,32 @@ static NSString * const UPDATED_VERSION = @"2.0";
     // Update bundle's version keys to latest version
     NSURL *infoURL = [[destinationBundleURL URLByAppendingPathComponent:@"Contents"] URLByAppendingPathComponent:@"Info.plist"];
     
-    BOOL infoFileExists = [fileManager fileExistsAtPath:infoURL.path];
+    BOOL infoFileExists = [infoURL checkResourceIsReachableAndReturnError:nil];
     assert(infoFileExists);
     
     NSMutableDictionary *infoDictionary = [[NSMutableDictionary alloc] initWithContentsOfURL:infoURL];
-    infoDictionary[(__bridge NSString *)kCFBundleVersionKey] = UPDATED_VERSION;
-    infoDictionary[@"CFBundleShortVersionString"] = UPDATED_VERSION;
+    [infoDictionary setObject:UPDATED_VERSION forKey:(__bridge NSString *)kCFBundleVersionKey];
+    [infoDictionary setObject:UPDATED_VERSION forKey:@"CFBundleShortVersionString"];
     
     BOOL wroteInfoFile = [infoDictionary writeToURL:infoURL atomically:NO];
     assert(wroteInfoFile);
     
     // Change current working directory so web server knows where to list files
-    BOOL changedCurrentWorkingDirectory = [fileManager changeCurrentDirectoryPath:serverDirectoryURL.path];
-    assert(changedCurrentWorkingDirectory);
+    NSString *serverDirectoryPath = serverDirectoryURL.path;
+    assert(serverDirectoryPath != nil);
     
     // Create the archive for our update
     NSString *zipName = @"Sparkle_Test_App.zip";
     NSTask *dittoTask = [[NSTask alloc] init];
     dittoTask.launchPath = @"/usr/bin/ditto";
     dittoTask.arguments = @[@"-c", @"-k", @"--sequesterRsrc", @"--keepParent", destinationBundleURL.lastPathComponent, zipName];
+    dittoTask.currentDirectoryPath = serverDirectoryPath;
     [dittoTask launch];
     [dittoTask waitUntilExit];
     
     assert(dittoTask.terminationStatus == 0);
     
-    [[NSFileManager defaultManager] removeItemAtURL:destinationBundleURL error:NULL];
+    [fileManager removeItemAtURL:destinationBundleURL error:NULL];
     
     // Don't ever do this at home, kids (seriously)
     // (that is, including the private key inside of your application)
@@ -119,7 +125,7 @@ static NSString * const UPDATED_VERSION = @"2.0";
     signUpdateTask.launchPath = signUpdatePath;
     
     NSURL *archiveURL = [serverDirectoryURL URLByAppendingPathComponent:zipName];
-    signUpdateTask.arguments = @[archiveURL, privateKeyPath];
+    signUpdateTask.arguments = @[archiveURL.path, privateKeyPath];
     
     NSPipe *outputPipe = [NSPipe pipe];
     signUpdateTask.standardOutput = outputPipe;
@@ -136,7 +142,9 @@ static NSString * const UPDATED_VERSION = @"2.0";
     
     // Obtain the file attributes to get the file size of our update later
     NSError *fileAttributesError = nil;
-    NSDictionary *archiveFileAttributes = [fileManager attributesOfItemAtPath:archiveURL.path error:&fileAttributesError];
+    NSString *archivePath = archiveURL.path;
+    assert(archivePath != nil);
+    NSDictionary *archiveFileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:archivePath error:&fileAttributesError];
     if (archiveFileAttributes == nil) {
         NSLog(@"Failed to retrieve file attributes from archive with error %@", fileAttributesError);
         assert(NO);
@@ -147,8 +155,10 @@ static NSString * const UPDATED_VERSION = @"2.0";
     
     // Copy our appcast over to the server directory
     NSURL *appcastDestinationURL = [[serverDirectoryURL URLByAppendingPathComponent:appcastName] URLByAppendingPathExtension:appcastExtension];
+    NSURL *appcastPath = [mainBundle URLForResource:appcastName withExtension:appcastExtension];
+    assert(appcastPath);
     NSError *copyAppcastError = nil;
-    if (![fileManager copyItemAtURL:[mainBundle URLForResource:appcastName withExtension:appcastExtension] toURL:appcastDestinationURL error:&copyAppcastError]) {
+    if (![fileManager copyItemAtURL:appcastPath toURL:appcastDestinationURL error:&copyAppcastError]) {
         NSLog(@"Failed to copy appcast into cache directory with error %@", copyAppcastError);
         assert(NO);
     }
@@ -175,7 +185,12 @@ static NSString * const UPDATED_VERSION = @"2.0";
     }
     
     // Finally start the server
-    self.serverTask = [NSTask launchedTaskWithLaunchPath:@"/usr/bin/python" arguments:@[@"-m", @"SimpleHTTPServer", @"1337"]];
+    SUTestWebServer *webServer = [[SUTestWebServer alloc] initWithPort:1337 workingDirectory:serverDirectoryPath];
+    if (!webServer) {
+        NSLog(@"Failed to create the web server");
+        assert(NO);
+    }
+    self.webServer = webServer;
     
     // Show the Settings window
     self.updateSettingsWindowController = [[SUUpdateSettingsWindowController alloc] init];
@@ -184,7 +199,7 @@ static NSString * const UPDATED_VERSION = @"2.0";
 
 - (void)applicationWillTerminate:(NSNotification * __unused)notification
 {
-    [self.serverTask terminate];
+    [self.webServer close];
 }
 
 @end
