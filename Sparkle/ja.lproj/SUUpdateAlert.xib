@@ -158,7 +158,7 @@ Gw
                             <action selector="remindMeLater:" target="-2" id="34"/>
                         </connections>
                     </button>
-                    <button verticalHuggingPriority="750" horizontalCompressionResistancePriority="998" translatesAutoresizingMaskIntoConstraints="NO" id="23">
+                    <button hidden="YES" verticalHuggingPriority="750" horizontalCompressionResistancePriority="998" translatesAutoresizingMaskIntoConstraints="NO" id="23">
                         <rect key="frame" x="103" y="12" width="185" height="32"/>
                         <buttonCell key="cell" type="push" title="このバージョンはスキップ" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="172">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
