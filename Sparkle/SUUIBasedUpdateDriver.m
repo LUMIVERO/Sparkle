@@ -111,7 +111,7 @@
     if (!self.automaticallyInstallUpdates) {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = SULocalizedString(@"You're up-to-date!", "Status message shown when the user checks for updates but is already current or the feed doesn't contain any updates.");
-        alert.informativeText = [NSString stringWithFormat:SULocalizedString(@"%@ %@ is currently the newest version available.", nil), [self.host name], [self.host displayVersion]];
+        alert.informativeText = [NSString stringWithFormat:SULocalizedString(@"You are currently on the newest version available.", nil)];
         [alert addButtonWithTitle:SULocalizedString(@"OK", nil)];
         [self showAlert:alert];
     }
