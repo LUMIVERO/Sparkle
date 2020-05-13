@@ -4,12 +4,12 @@
 
 "%@ %@ is currently the newest version available." = "%1$@ %2$@ es la última versión disponible.";
 
-"You are currently on the newest version available." = "Actualmente estás en la versión más nueva disponible.";
+"You are currently on the newest version available." = "Actualmente está en la versión más nueva disponible.";
 
 /* Description text for SUUpdateAlert when the update is downloadable. */
 "%@ %@ is now available--you have %@. Would you like to download it now?" = "%1$@ %2$@ está disponible (usted tiene la %3$@). ¿Desea descargarla ahora?";
 
-"Would you like to download it now?" = "¿Desea descargarlo ahora?";
+"Would you like to download it now?" = "¿Desea descargarla ahora?";
 
 /* Description text for SUUpdateAlert when the update informational with no download. */
 "%@ %@ is now available--you have %@. Would you like to learn more about this update on the web?" = "%1$@ %2$@ is now available--you have %3$@. Would you like to learn more about this update on the web?";

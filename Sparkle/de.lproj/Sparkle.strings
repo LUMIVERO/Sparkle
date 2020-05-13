@@ -6,6 +6,9 @@
 
 "%@ %@ is currently the newest version available." = "%1$@ %2$@ ist zur Zeit die neueste verfügbare Version.";
 
+"You are currently on the newest version available." = "Sie haben derzeit die neueste verfügbare Version.";
+"Would you like to download it now?" = "Möchten Sie sie jetzt herunterladen?";
+
 /* Description text for SUUpdateAlert when the update is downloadable. */
 "%@ %@ is now available--you have %@. Would you like to download it now?" = "%1$@ %2$@ ist verfügbar (Sie verwenden Version %3$@). Möchten Sie die neue Version jetzt herunterladen?";
 
