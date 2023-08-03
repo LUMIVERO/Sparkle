@@ -1632,7 +1632,7 @@
 				ORGANIZATIONNAME = "Sparkle Project";
 				TargetAttributes = {
 					55C14BB6136EEF1500649790 = {
-						DevelopmentTeam = A66L57342X;
+						DevelopmentTeam = 8F4S7H8S59;
 						ProvisioningStyle = Manual;
 					};
 					5AA96C541E0AE0DB00CA4346 = {
@@ -1641,7 +1641,7 @@
 						ProvisioningStyle = Automatic;
 					};
 					5D06E8CF0FD68C7C005AE3F6 = {
-						DevelopmentTeam = A66L57342X;
+						DevelopmentTeam = 8F4S7H8S59;
 						ProvisioningStyle = Manual;
 					};
 					612279D80DB5470200AB99EA = {
@@ -1650,7 +1650,7 @@
 					};
 					722954B31D04ADAF00ECF9CA = {
 						CreatedOnToolsVersion = 7.3.1;
-						DevelopmentTeam = A66L57342X;
+						DevelopmentTeam = 8F4S7H8S59;
 						ProvisioningStyle = Manual;
 					};
 					726B2B5C1C645FC900388755 = {
@@ -1659,7 +1659,7 @@
 						TestTargetID = 61B5F90109C4CEE200B25A18;
 					};
 					8DC2EF4F0486A6940098B216 = {
-						DevelopmentTeam = A66L57342X;
+						DevelopmentTeam = 8F4S7H8S59;
 						ProvisioningStyle = Manual;
 					};
 				};
@@ -2390,6 +2390,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = A66L57342X;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8F4S7H8S59;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Coverage;
@@ -2415,6 +2416,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = A66L57342X;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8F4S7H8S59;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Coverage;
@@ -2426,6 +2428,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = A66L57342X;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8F4S7H8S59;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Coverage;
@@ -2455,6 +2458,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = A66L57342X;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8F4S7H8S59;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Debug;
@@ -2466,6 +2470,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = A66L57342X;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8F4S7H8S59;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Release;
@@ -2494,6 +2499,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = A66L57342X;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8F4S7H8S59;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Debug;
@@ -2505,6 +2511,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = A66L57342X;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8F4S7H8S59;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Release;
@@ -2537,6 +2544,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = A66L57342X;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8F4S7H8S59;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Debug;
@@ -2548,6 +2556,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = A66L57342X;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8F4S7H8S59;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Release;
@@ -2587,6 +2596,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = A66L57342X;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8F4S7H8S59;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -2600,6 +2610,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = A66L57342X;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8F4S7H8S59;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -2613,6 +2624,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = A66L57342X;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8F4S7H8S59;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
