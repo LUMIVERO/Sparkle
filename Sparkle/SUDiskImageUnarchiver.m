@@ -82,6 +82,9 @@
         // Note: this check does not follow symbolic links, which is what we want
         while ([[NSURL fileURLWithPath:mountPoint] checkResourceIsReachableAndReturnError:NULL]);
         
+        // We would not be here if `mountPoint` were nil, but the static analyzer doesn’t know that.
+        assert(mountPoint != nil);
+        
         NSData *promptData = nil;
         promptData = [NSData dataWithBytes:"yes\n" length:4];
         
@@ -182,7 +185,7 @@
         [notifier notifyFailureWithError:error];
 
     finally:
-        if (mountedSuccessfully) {
+        if (mountPoint != nil && mountedSuccessfully) {
             NSTask *task = [[NSTask alloc] init];
             task.launchPath = @"/usr/bin/hdiutil";
             task.arguments = @[@"detach", mountPoint, @"-force"];
