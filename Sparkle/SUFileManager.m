@@ -263,13 +263,13 @@ static BOOL SUMakeRefFromURL(NSURL *url, FSRef *ref, NSError **error) {
         return NO;
     }
 
-    NSDictionary *attributes = [_fileManager attributesOfItemAtPath:path error:NULL];
+    NSDictionary<NSFileAttributeKey, id> *attributes = [_fileManager attributesOfItemAtPath:path error:NULL];
     if (attributes == nil) {
         return NO;
     }
 
     if (isDirectory != NULL) {
-        *isDirectory = [[attributes objectForKey:NSFileType] isEqualToString:NSFileTypeDirectory];
+        *isDirectory = [(NSString *)[attributes objectForKey:NSFileType] isEqualToString:NSFileTypeDirectory];
     }
 
     return YES;

@@ -62,7 +62,7 @@ NSString *const SUUpdaterAppcastNotificationKey = @"SUUpdaterAppCastNotification
 @synthesize sparkleBundle;
 @synthesize decryptionPassword;
 
-static NSMutableDictionary *sharedUpdaters = nil;
+static NSMutableDictionary<NSValue *, SUUpdater *> *sharedUpdaters = nil;
 static NSString *const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefaultsObservationContext";
 
 #ifdef DEBUG
@@ -83,9 +83,9 @@ static NSString *const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefaults
 + (SUUpdater *)updaterForBundle:(NSBundle *)bundle
 {
     if (bundle == nil) bundle = [NSBundle mainBundle];
-    id updater = [sharedUpdaters objectForKey:[NSValue valueWithNonretainedObject:bundle]];
+    SUUpdater *updater = [sharedUpdaters objectForKey:[NSValue valueWithNonretainedObject:bundle]];
     if (updater == nil) {
-        updater = [[[self class] alloc] initForBundle:bundle];
+        updater = [[self alloc] initForBundle:bundle];
     }
     return updater;
 }
@@ -283,8 +283,14 @@ static NSString *const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefaults
 - (void)checkForUpdatesInBackground
 {
     // Do not use reachability for a preflight check. This can be deceptive and a bad idea. Apple does not recommend doing it.
-    SUUpdateDriver *theUpdateDriver = [[([self automaticallyDownloadsUpdates] ? [SUAutomaticUpdateDriver class] : [SUScheduledUpdateDriver class])alloc] initWithUpdater:self];
-    
+    SUUpdateDriver *theUpdateDriver = nil;
+    if ([self automaticallyDownloadsUpdates]) {
+        theUpdateDriver = [[SUAutomaticUpdateDriver alloc] initWithUpdater:self];
+    }
+    else {
+        theUpdateDriver = [[SUScheduledUpdateDriver alloc] initWithUpdater:self];
+    }
+
     [self checkForUpdatesWithDriver:theUpdateDriver];
 }
 
@@ -519,7 +525,9 @@ static NSString *escapeURLComponent(NSString *str) {
     // Build up the parameterized URL.
     NSMutableArray *parameterStrings = [NSMutableArray array];
     for (NSDictionary *currentProfileInfo in parameters) {
-        [parameterStrings addObject:[NSString stringWithFormat:@"%@=%@", escapeURLComponent([[currentProfileInfo objectForKey:@"key"] description]), escapeURLComponent([[currentProfileInfo objectForKey:@"value"] description])]];
+        [parameterStrings addObject:[NSString stringWithFormat:@"%@=%@",
+                                     escapeURLComponent([(NSString *)[currentProfileInfo objectForKey:@"key"] description]),
+                                     escapeURLComponent([(NSString *)[currentProfileInfo objectForKey:@"value"] description])]];
     }
 
     NSString *separatorCharacter = @"?";
